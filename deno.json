@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "license": "Apache-2.0",
   "tasks": {
-    "test": "deno test -A",
+    "test": "deno test --allow-env='TSC_*,NODE_INSPECTOR*,VSCODE_INSPECTOR*,NODE_ENV' --allow-read='.'",
     "checks": "deno lint && deno check && deno fmt --check",
     "eg": "deno run -A example.ts"
   },

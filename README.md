@@ -1,29 +1,79 @@
-# codepath
+# Codepath
 
-`codepath` is a language and library for generating and opening code paths in a
-source tree
+Deterministic, human-readable code locations (code paths) for debugging &
+tooling.
 
-## Usage
+`Codepath` captures the file path & AST context segments at runtime and emits a
+DSL-defined path string. You can parse it with [Ohm](https://ohmjs.org/), or
+convert it to clickable URIs (VSCode, file://) for editor integrations.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Quickstart](#quickstart)
+- [Examples](#examples)
+- [DSL Grammar](#dsl-grammar)
+- [API](#api)
+- [Development](#development)
+
+---
+
+## Features
+
+- **Precise AST context**: `if[condition="x"]/then/block[0]`,
+  `forOf[expression="items"]`, `switch[...]/case[...]`, `try/catch/finally`,
+  `class/MyClass/methodName`, `arrow[0]`, `block[0]`, etc.
+- **Grammar-defined**: formal DSL spec in Ohm (`src/codepath.ohm`).
+- **Editor URIs**: `toScheme("file")` → `file:///…:line:col`,
+  `toScheme("vscode")` → `vscode://file/…:line:col`.
+- **Minimal deps**: only `typescript` & `ohm-js`.
+- **Tested**: robust Deno test suite.
+
+---
+
+## Quickstart
 
 ```ts
-import { Codepath } from "codepath";
-import { squeeze } from "@polyseam/squeeze";
-const fruits = ["apple", "orange", "grape"];
+import { Codepath } from "./mod.ts";
+import { loadOhmGrammar } from "./src/codepath-ohm.ts";
 
-for (const fruit of fruits) {
-  const juice = squeeze(fruit);
-  if (juice === "orange") {
-    const codepath = new Codepath();
-    console.log(codepath); // /src/utils/juice.ts/forOf[expression="fruits"]/block[0]/if[condition="juice === \"orange\""]/then/block[0]
-    const vscodeURL = codepath.toScheme("vscode");
-    console.log(vscodeURL); // vscode://file/src/utils/juice.ts:7:4
-    const fileURL = codepath.toScheme("file");
-    console.log(fileURL); // file:///src/utils/juice.ts:7:4
-  }
-}
+// Simple call site capture
+const cp = new Codepath();
+console.log(cp.toString());
+// → example.ts/if[condition="true"]/then/block[0]
+
+console.log(cp.toScheme("file"));
+// → file:///…/example.ts:10:5
+
+console.log(cp.toScheme("vscode"));
+// → vscode://file/…/example.ts:10:5
 ```
 
-## spec
+Run it:
+
+```bash
+deno run --allow-read example.ts
+```
+
+---
+
+## Examples
+
+See [example.ts](example.ts) for a full demonstration, including DSL validation
+against the grammar:
+
+```bash
+deno run -A example.ts
+```
+
+---
+
+## DSL Grammar
+
+The Codepath DSL grammar (Ohm) is defined in
+[`src/codepath.ohm`](src/codepath.ohm):
 
 ```ohm
 Codepath {
@@ -51,4 +101,32 @@ Codepath {
   NumericLiteral = digit+ ("." digit*)?
   loletter         = "_" | lower | upper
 }
+```
+
+---
+
+## API
+
+### `new Codepath()`
+
+Capture the call site and compute AST context segments.
+
+### `cp.toString(): string`
+
+Serialize to a DSL string: `"<relativePath>/<segment>/…"`.
+
+### `cp.toScheme(scheme: "file"|"vscode"): string`
+
+Format as a URI: `file:///abs/path:line:col` or
+`vscode://file/abs/path:line:col`.
+
+---
+
+## Development
+
+```bash
+deno task test
+deno fmt
+deno lint
+deno check
 ```
