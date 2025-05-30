@@ -42,16 +42,19 @@ export class Codepath {
 
   /** Inspect Error.stack, find the first external frame, return file + 1-based line/col. */
   private captureCallSite(): { file: string; line: number; column: number } {
+    const myFile = new URL(import.meta.url).pathname;
     const stack = (new Error().stack || "").split("\n").slice(1);
     for (const frame of stack) {
-      // look for "file:///…:line:col"
       const m = frame.match(/(file:\/\/\/[^():]+):(\d+):(\d+)/);
-      if (m && !m[1].endsWith("/codepath.ts")) {
-        return {
-          file: new URL(m[1]).pathname,
-          line: parseInt(m[2], 10),
-          column: parseInt(m[3], 10),
-        };
+      if (m) {
+        const filePath = new URL(m[1]).pathname;
+        if (filePath !== myFile) {
+          return {
+            file: filePath,
+            line: parseInt(m[2], 10),
+            column: parseInt(m[3], 10),
+          };
+        }
       }
     }
     throw new Error("Could not determine caller location");
@@ -86,25 +89,63 @@ export class Codepath {
       ) {
         segs.unshift((cur.name as ts.Identifier).text);
       } else if (ts.isArrowFunction(cur) || ts.isFunctionExpression(cur)) {
-        // anonymous
         const label = ts.isArrowFunction(cur) ? "arrow" : "anon";
         const idx = this.indexAmongSiblings(cur, cur.kind);
         segs.unshift(`${label}[${idx}]`);
       } else if (ts.isIfStatement(cur)) {
+        const cond = cur.expression.getText(sf);
+        const filter = `[condition=${JSON.stringify(cond)}]`;
         const then = cur.thenStatement;
         if (pos >= then.getStart() && pos < then.getEnd()) {
           segs.unshift("then");
-          segs.unshift("if");
-        } else if (cur.elseStatement) {
+        } else if (
+          cur.elseStatement &&
+          pos >= cur.elseStatement.getStart() &&
+          pos < cur.elseStatement.getEnd()
+        ) {
           segs.unshift("else");
-          segs.unshift("if");
-        } else {
-          segs.unshift("if");
         }
+        segs.unshift(`if${filter}`);
+      } else if (ts.isForOfStatement(cur)) {
+        const expr = cur.expression.getText(sf);
+        segs.unshift(`forOf[expression=${JSON.stringify(expr)}]`);
+      } else if (ts.isForInStatement(cur)) {
+        const expr = cur.expression.getText(sf);
+        segs.unshift(`forIn[expression=${JSON.stringify(expr)}]`);
       } else if (ts.isForStatement(cur)) {
         segs.unshift("for");
+      } else if (ts.isWhileStatement(cur)) {
+        const cond = cur.expression.getText(sf);
+        segs.unshift(`while[condition=${JSON.stringify(cond)}]`);
+      } else if (ts.isDoStatement(cur)) {
+        const cond = cur.expression.getText(sf);
+        segs.unshift(`while[condition=${JSON.stringify(cond)}]`);
+        segs.unshift("do");
+      } else if (ts.isSwitchStatement(cur)) {
+        const expr = cur.expression.getText(sf);
+        segs.unshift(`switch[expression=${JSON.stringify(expr)}]`);
+      } else if (ts.isCaseClause(cur)) {
+        const expr = cur.expression.getText(sf);
+        segs.unshift(`case[expression=${JSON.stringify(expr)}]`);
+      } else if (ts.isDefaultClause(cur)) {
+        segs.unshift("default");
+      } else if (ts.isTryStatement(cur)) {
+        segs.unshift("try");
+      } else if (ts.isCatchClause(cur)) {
+        const name = cur.variableDeclaration?.name.getText(sf);
+        segs.unshift(
+          name ? `catch[name=${JSON.stringify(name)}]` : "catch",
+        );
+      } else if (
+        ts.isBlock(cur) &&
+        ts.isTryStatement(cur.parent) &&
+        (cur.parent as ts.TryStatement).finallyBlock === cur
+      ) {
+        segs.unshift("finally");
+      } else if (ts.isBlock(cur)) {
+        const idx = this.indexAmongSiblings(cur, cur.kind);
+        segs.unshift(`block[${idx}]`);
       }
-      // …handle while, switch, try/catch, etc. similarly…
 
       cur = cur.parent;
     }

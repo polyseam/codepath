@@ -1,11 +1,21 @@
 import { loadOhmGrammar } from "./src/codepath-ohm.ts";
+import { Codepath } from "./mod.ts";
 
-const g = loadOhmGrammar();
-const input = `src/codepath.ts/foo/if[condition="name=matt"]/then`;
-const match = g.match(input);
+// Generate a codepath for this call site and verify it matches the DSL grammar
 
+const codepath = new Codepath();
+const raw = codepath.toString();
+console.log("Raw codepath:", raw);
+
+const grammar = loadOhmGrammar();
+const match = grammar.match(raw);
 if (match.succeeded()) {
-  console.log(`"${input}" is a valid codepath`);
+  console.log("✓ Valid codepath DSL");
 } else {
-  console.log(`"${input}" is not a valid codepath: ${match.message}`);
+  console.error(`✗ Invalid codepath DSL: ${match.message}`);
+  Deno.exit(1);
 }
+
+// Show platform-specific URLs
+console.log("VSCode URL:", codepath.toScheme("vscode"));
+console.log("File URL:", codepath.toScheme("file"));

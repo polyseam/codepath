@@ -14,7 +14,7 @@ for (const fruit of fruits) {
   const juice = squeeze(fruit);
   if (juice === "orange") {
     const codepath = new Codepath();
-    console.log(codepath); // /src/utils/juice.ts/for[0]/if[0]then
+    console.log(codepath); // /src/utils/juice.ts/forOf[expression="fruits"]/block[0]/if[condition="juice === \"orange\""]/then/block[0]
     const vscodeURL = codepath.toScheme("vscode");
     console.log(vscodeURL); // vscode://file/src/utils/juice.ts:7:4
     const fileURL = codepath.toScheme("file");
