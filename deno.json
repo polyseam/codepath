@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "license": "Apache-2.0",
   "tasks": {
-    "test": "deno test -A --no-check",
+    "test": "deno test -A",
+    "checks": "deno lint && deno check && deno fmt --check",
     "eg": "deno run -A example.ts"
   },
   "imports": {

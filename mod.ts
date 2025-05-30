@@ -90,7 +90,8 @@ export class Codepath {
         segs.unshift((cur.name as ts.Identifier).text);
       } else if (ts.isArrowFunction(cur) || ts.isFunctionExpression(cur)) {
         const label = ts.isArrowFunction(cur) ? "arrow" : "anon";
-        const idx = this.indexAmongSiblings(cur, cur.kind);
+        let idx = this.indexAmongSiblings(cur, cur.kind);
+        if (idx < 0) idx = 0;
         segs.unshift(`${label}[${idx}]`);
       } else if (ts.isIfStatement(cur)) {
         const cond = cur.expression.getText(sf);
@@ -143,7 +144,8 @@ export class Codepath {
       ) {
         segs.unshift("finally");
       } else if (ts.isBlock(cur)) {
-        const idx = this.indexAmongSiblings(cur, cur.kind);
+        let idx = this.indexAmongSiblings(cur, cur.kind);
+        if (idx < 0) idx = 0;
         segs.unshift(`block[${idx}]`);
       }
 
