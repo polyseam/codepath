@@ -3,7 +3,7 @@ Codepath {
   FilePath       = Abs? PathComponent ("/" PathComponent)* "." Extension
   Abs            = "/"
   PathComponent  = PathChar+
-  PathChar       = ~("/" | "[" | "]" | " ") any
+  PathChar       = ~("/" | "[" | "]" | " " | ".") any
   Extension      = "ts" | "tsx" | "js" | "jsx"
   Segment        = Name Filter?
   Filter         = "[" (Index | PropertyFilter) "]"

@@ -1,6 +1,11 @@
-import {loadOhmGrammar} from './src/codepath-ohm.ts';
+import { loadOhmGrammar } from "./src/codepath-ohm.ts";
 
 const g = loadOhmGrammar();
-const match = g.match("src/codepath.ts/foo/if/then");
+const input = `src/codepath.ts/foo/if[condition="name=matt"]/then`;
+const match = g.match(input);
 
-console.log('m',match.message); // Should print "src/codepath.ts/foo/if/then is not a valid codepath"
+if (match.succeeded()) {
+  console.log(`"${input}" is a valid codepath`);
+} else {
+  console.log(`"${input}" is not a valid codepath: ${match.message}`);
+}

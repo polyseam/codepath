@@ -25,46 +25,30 @@ for (const fruit of fruits) {
 
 ## spec
 
-```bnf
-<Reference>       ::= <FilePath> [ "/" <Segment> ( "/" <Segment> )* ]
-
-# A file path (relative or absolute), ending in a recognized extension.
-<FilePath>        ::= <PathChars>+ "." <Extension>
-<Extension>       ::= "ts" | "tsx" | "js" | "jsx" | …  
-
-<Segment>         ::= <Name> [ "[" ( <Index> | <PropertyFilter> ) "]" ]
-
-# A Name is either a general identifier (e.g. class, function names)
-# or one of the reserved Keywords for control structures.
-<Name>            ::= <Identifier> | <Keyword>
-
-<Keyword>         ::= "if" | "then" | "else"
-                    | "for" | "forOf" | "forIn" | "while" | "do"
-                    | "switch" | "case" | "default"
-                    | "try" | "catch" | "finally"
-                    | "arrow" | "anon" | "block"
-
-<Identifier>      ::= <Alpha> ( <AlphaNum> | "_" )*
-
-<Index>           ::= <Digit>+
-
-<PropertyFilter>  ::= <PropName> "=" <Literal>
-
-# PropName is the name of an AST node property
-PropName          ::= "name"          # e.g. FunctionDeclaration.name
-                    | "condition"     # e.g. IfStatement.expression
-                    | "callee"        # e.g. CallExpression.expression
-                    | "expression"    # e.g. CaseClause.expression
-                    | …               # extendable per language needs
-
-<Literal>         ::= <StringLiteral> | <NumericLiteral>
-
-<StringLiteral>   ::= "\"" <StringChars>* "\""  
-<NumericLiteral>  ::= <Digit>+ ( "." <Digit>* )?
-
-<PathChars>       ::= any character except "/" or "[" or "]"
-
-<Alpha>           ::= "A" … "Z" | "a" … "z" | "_"
-<Digit>           ::= "0" … "9"
-<AlphaNum>        ::= <Alpha> | <Digit>
+```ohm
+Codepath {
+  Reference      = FilePath ("/" Segment)*
+  FilePath       = Abs? PathComponent ("/" PathComponent)* "." Extension
+  Abs            = "/"
+  PathComponent  = PathChar+
+  PathChar       = ~("/" | "[" | "]" | " " | ".") any
+  Extension      = "ts" | "tsx" | "js" | "jsx"
+  Segment        = Name Filter?
+  Filter         = "[" (Index | PropertyFilter) "]"
+  Name           = Identifier | Keyword
+  Keyword        = "if" | "then" | "else"
+                 | "for" | "forOf" | "forIn"
+                 | "while" | "do"
+                 | "switch" | "case" | "default"
+                 | "try" | "catch" | "finally"
+                 | "arrow" | "anon" | "block"
+  Identifier     = loletter (loletter | digit)*
+  Index          = digit+
+  PropertyFilter = PropName "=" Literal
+  PropName       = "name" | "condition" | "callee" | "expression"
+  Literal        = StringLiteral | NumericLiteral
+  StringLiteral  = "\"" (~"\"" any)* "\""
+  NumericLiteral = digit+ ("." digit*)?
+  loletter         = "_" | lower | upper
+}
 ```
