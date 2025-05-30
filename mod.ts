@@ -1,46 +1,63 @@
-import * as ts from "npm:typescript@latest";
-import { relative, toFileUrl } from "jsr:@std/path";
+import * as ts from "typescript";
+import { relative, toFileUrl } from "@std/path";
 
+/**
+ * Captures the call site and generates a deterministic, human-readable DSL
+ * path through the AST for debugging purposes.
+ */
 export class Codepath {
-  private filePath: string; // absolute
-  private relPath: string; // relative to cwd
-  private line: number; // 1-based
-  private column: number; // 1-based
-  private segments: string[]; // AST path segments after the file
+  /** Absolute path to the source file containing the call site. */
+  private filePath: string;
+  /** Path to the source file relative to the current working directory. */
+  private relPath: string;
+  /** 1-based line number of the call site. */
+  private line: number;
+  /** 1-based column number of the call site. */
+  private column: number;
+  /** AST path segments following the file path. */
+  private segments: string[];
 
+  /**
+   * Initialize Codepath by capturing the call site and computing the AST segments.
+   */
   constructor() {
-    // 1) Figure out who called us
     const { file, line, column } = this.captureCallSite();
     this.filePath = Deno.realPathSync(file);
     this.relPath = relative(Deno.cwd(), this.filePath);
     this.line = line;
     this.column = column;
 
-    // 2) Parse the file and build our codepath segments
     this.segments = this.buildSegments();
   }
 
-  /** Returns the raw DSL: "<relPath>/<segment1>/<segment2>/…". */
+  /**
+   * Return the raw DSL codepath string in the form:
+   *   "<relativePath>/<segment1>/<segment2>/…"
+   */
   toString(): string {
     return [this.relPath, ...this.segments].join("/");
   }
 
   /**
-   * Emits either:
-   *  - file:// URL: `file:///abs/path:line:col`
-   *  - vscode:// URL: `vscode://file//abs/path:line:col`
+   * Format the call site as a URI for "file" or "vscode" schemes,
+   * including line and column number.
+   *
+   * - "file":  file:///abs/path:line:col
+   * - "vscode": vscode://file//abs/path:line:col
    */
   toScheme(scheme: "file" | "vscode"): string {
-    const uriPath = toFileUrl(this.filePath).href; // e.g. "file:///home/…"
+    const uriPath = toFileUrl(this.filePath).href;
     const loc = `:${this.line}:${this.column}`;
-    if (scheme === "file") {
-      return uriPath + loc;
-    } else {
-      return `vscode://file/${this.filePath}${loc}`;
-    }
+    const prefix = scheme === "file"
+      ? uriPath
+      : `vscode://file/${this.filePath}`;
+    return `${prefix}${loc}`;
   }
 
-  /** Inspect Error.stack, find the first external frame, return file + 1-based line/col. */
+  /**
+   * Inspect the stack trace to find the first frame outside this module,
+   * returning the file path (absolute) along with 1-based line and column.
+   */
   private captureCallSite(): { file: string; line: number; column: number } {
     const myFile = new URL(import.meta.url).pathname;
     const stack = (new Error().stack || "").split("\n").slice(1);
@@ -60,24 +77,24 @@ export class Codepath {
     throw new Error("Could not determine caller location");
   }
 
-  /** Read & parse the TS file, find the AST node at (line,col), ascend to build segments. */
+  /**
+   * Read and parse the TypeScript source file, locate the AST node at the
+   * call site, and walk up the tree to accumulate path segments.
+   */
   private buildSegments(): string[] {
     const src = Deno.readTextFileSync(this.filePath);
     const sf = ts.createSourceFile(
       this.filePath,
       src,
       ts.ScriptTarget.Latest,
-      /*setParents*/ true,
+      true,
     );
     const pos = sf.getPositionOfLineAndCharacter(
       this.line - 1,
       this.column - 1,
     );
 
-    // 1. Find the deepest node containing pos
     const hit = this.findDeepestNode(sf, pos);
-
-    // 2. Walk up, collecting segments
     const segs: string[] = [];
     let cur: ts.Node | undefined = hit;
     while (cur && cur.kind !== ts.SyntaxKind.SourceFile) {
@@ -90,9 +107,7 @@ export class Codepath {
         segs.unshift((cur.name as ts.Identifier).text);
       } else if (ts.isArrowFunction(cur) || ts.isFunctionExpression(cur)) {
         const label = ts.isArrowFunction(cur) ? "arrow" : "anon";
-        let idx = this.indexAmongSiblings(cur, cur.kind);
-        if (idx < 0) idx = 0;
-        segs.unshift(`${label}[${idx}]`);
+        segs.unshift(`${label}[${this.indexAmongSiblings(cur, cur.kind)}]`);
       } else if (ts.isIfStatement(cur)) {
         const cond = cur.expression.getText(sf);
         const filter = `[condition=${JSON.stringify(cond)}]`;
@@ -133,7 +148,8 @@ export class Codepath {
       } else if (ts.isTryStatement(cur)) {
         segs.unshift("try");
       } else if (ts.isCatchClause(cur)) {
-        const name = cur.variableDeclaration?.name.getText(sf);
+        const rawName = cur.variableDeclaration?.name.getText(sf) ?? "";
+        const name = rawName.replace(/^_+/, "");
         segs.unshift(
           name ? `catch[name=${JSON.stringify(name)}]` : "catch",
         );
@@ -144,15 +160,12 @@ export class Codepath {
       ) {
         segs.unshift("finally");
       } else if (ts.isBlock(cur)) {
-        let idx = this.indexAmongSiblings(cur, cur.kind);
-        if (idx < 0) idx = 0;
-        segs.unshift(`block[${idx}]`);
+        segs.unshift(`block[${this.indexAmongSiblings(cur, cur.kind)}]`);
       }
 
       cur = cur.parent;
     }
 
-    // If no segments were collected (top-level code), use an implicit block
     if (segs.length === 0) {
       segs.push("block[0]");
     }
@@ -160,7 +173,9 @@ export class Codepath {
     return segs;
   }
 
-  /** Recursively find the smallest node containing pos */
+  /**
+   * Recursively find the most-specific AST node that contains the given position.
+   */
   private findDeepestNode(node: ts.Node, pos: number): ts.Node {
     for (const c of node.getChildren()) {
       if (c.getStart() <= pos && pos < c.getEnd()) {
@@ -170,10 +185,13 @@ export class Codepath {
     return node;
   }
 
-  /** Among parent’s children of same kind, what is this node’s 0-based index? */
+  /**
+   * Return the non-negative 0-based index of this node among its parent's
+   * children of the same kind.
+   */
   private indexAmongSiblings(node: ts.Node, kind: ts.SyntaxKind): number {
     const siblings =
       node.parent?.getChildren().filter((c) => c.kind === kind) || [];
-    return siblings.findIndex((c) => c === node);
+    return Math.max(0, siblings.findIndex((c) => c === node));
   }
 }
