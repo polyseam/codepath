@@ -1,30 +1,27 @@
 # codepath
 
-`codepath` is a language and library for generating and opening code paths in a source tree
-
+`codepath` is a language and library for generating and opening code paths in a
+source tree
 
 ## Usage
 
-### generate
-
 ```ts
-import { generate } from 'codepath';
-import { squeeze } from '@polyseam/squeeze';
+import { Codepath } from "codepath";
+import { squeeze } from "@polyseam/squeeze";
+const fruits = ["apple", "orange", "grape"];
 
-for(const juice of [
-  'apple',
-  'orange',
-  'grape',
-]) {
-  const juicePath = squeeze(juice);
-  if(juice==='orange') {
-    const codepath = generate();
-    console.log(codepath); // 
+for (const fruit of fruits) {
+  const juice = squeeze(fruit);
+  if (juice === "orange") {
+    const codepath = new Codepath();
+    console.log(codepath); // /src/utils/juice.ts/for[0]/if[0]then
+    const vscodeURL = codepath.toScheme("vscode");
+    console.log(vscodeURL); // vscode://file/src/utils/juice.ts:7:4
+    const fileURL = codepath.toScheme("file");
+    console.log(fileURL); // file:///src/utils/juice.ts:7:4
   }
 }
 ```
-
-### 
 
 ## spec
 
@@ -32,18 +29,18 @@ for(const juice of [
 <Reference>     ::= <FilePath> [ "/" <Segment> ( "/" <Segment> )* ]
 <FilePath>      ::= <String>  # e.g. "src/utils/math.ts"
 
-<Segment>       ::= <NamedDecl> 
-                  | <IfBranch> 
-                  | <ElseBranch> 
-                  | <Loop> 
-                  | <Block> 
-                  | <Switch> 
-                  | <Case> 
-                  | <Default> 
-                  | <Try> 
-                  | <Catch> 
-                  | <Finally> 
-                  | <ArrowFunc> 
+<Segment>       ::= <NamedDecl>
+                  | <IfBranch>
+                  | <ElseBranch>
+                  | <Loop>
+                  | <Block>
+                  | <Switch>
+                  | <Case>
+                  | <Default>
+                  | <Try>
+                  | <Catch>
+                  | <Finally>
+                  | <ArrowFunc>
                   | <AnonFunc>
 
 <NamedDecl>     ::= <Identifier>  # class, function or method name

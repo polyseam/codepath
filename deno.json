@@ -1,12 +1,12 @@
 {
-    "name":"@polyseam/codepath",
-    "version":"0.1.0",
-    "license":"Apache-2.0",
-    "imports": {
-        "@std/path": "jsr:@std/path@^1.1.0",
-        "typescript": "npm:typescript@^5.8.3"
-    },
-    "exports":{
-        ".": "./mod.ts"
-    }
+  "name": "@polyseam/codepath",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "imports": {
+    "@std/path": "jsr:@std/path@^1.1.0",
+    "typescript": "npm:typescript@^5.8.3"
+  },
+  "exports": {
+    ".": "./mod.ts"
+  }
 }
