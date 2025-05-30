@@ -150,6 +150,11 @@ export class Codepath {
       cur = cur.parent;
     }
 
+    // If no segments were collected (top-level code), use an implicit block
+    if (segs.length === 0) {
+      segs.push("block[0]");
+    }
+
     return segs;
   }
 
