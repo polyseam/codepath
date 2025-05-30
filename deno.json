@@ -2,8 +2,14 @@
   "name": "@polyseam/codepath",
   "version": "0.1.0",
   "license": "Apache-2.0",
+  "tasks": {
+    "test":"deno test -A --no-check",
+    "eg": "deno run -A example.ts"
+  },
   "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.13",
     "@std/path": "jsr:@std/path@^1.1.0",
+    "ohm-js": "npm:ohm-js@^17.1.0",
     "typescript": "npm:typescript@^5.8.3"
   },
   "exports": {

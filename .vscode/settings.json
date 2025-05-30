@@ -18,5 +18,16 @@
     "titleBar.inactiveBackground": "#dd053199",
     "titleBar.inactiveForeground": "#e7e7e799"
   },
-  "peacock.color": "#dd0531"
+  "peacock.color": "#dd0531",
+  "[ebnf]": {
+    "editor.defaultFormatter": "vscode.ebnf",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "editor.wordBasedSuggestions": "off",
+    "editor.suggestSelection": "first",
+    "editor.suggest.showKeywords": true,
+    "editor.suggest.showSnippets": true,
+    "editor.suggest.showWords": false,
+    "editor.suggest.showStatusBar": true
+  }
 }
