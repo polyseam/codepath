@@ -1,9 +1,5 @@
-import {
-  assert,
-  assertEquals,
-  assertMatch,
-  assertStringIncludes,
-} from "@std/assert";
+// deno-lint-ignore-file no-constant-condition no-empty
+import { assert, assertMatch, assertStringIncludes } from "@std/assert";
 import { Codepath } from "../mod.ts";
 import { loadOhmGrammar } from "../src/codepath-ohm.ts";
 
@@ -72,7 +68,7 @@ Deno.test("if statement else branch", () => {
 
 Deno.test("for-of loop", () => {
   const items = [1, 2, 3];
-  for (const item of items) {
+  for (const _item of items) {
     const raw = new Codepath().toString();
     assertStringIncludes(raw, 'forOf[expression="items"]');
     assertStringIncludes(raw, "/block[0]");
@@ -82,7 +78,7 @@ Deno.test("for-of loop", () => {
 
 Deno.test("for-in loop", () => {
   const obj = { a: 1, b: 2 };
-  for (const key in obj) {
+  for (const _key in obj) {
     const raw = new Codepath().toString();
     assertStringIncludes(raw, 'forIn[expression="obj"]');
     assertStringIncludes(raw, "/block[0]");
@@ -144,7 +140,7 @@ Deno.test("try-catch-finally", () => {
     assertStringIncludes(raw1, "/block[0]");
     assert(loadOhmGrammar().match(raw1).succeeded());
     throw new Error();
-  } catch (e) {
+  } catch (_e) {
     const raw2 = new Codepath().toString();
     assertStringIncludes(raw2, 'catch[name="e"]');
     assertStringIncludes(raw2, "/block[0]");
