@@ -1,0 +1,25 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@std/path@^1.1.0": "1.1.0",
+    "npm:typescript@^5.8.3": "5.8.3",
+    "npm:typescript@latest": "5.8.3"
+  },
+  "jsr": {
+    "@std/path@1.1.0": {
+      "integrity": "ddc94f8e3c275627281cbc23341df6b8bcc874d70374f75fec2533521e3d6886"
+    }
+  },
+  "npm": {
+    "typescript@5.8.3": {
+      "integrity": "sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==",
+      "bin": true
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@std/path@^1.1.0",
+      "npm:typescript@^5.8.3"
+    ]
+  }
+}
